@@ -139,6 +139,18 @@ describe("GET /companies", function () {
     })
   });
 
+  test("Test fail with extra filter parameter", async function () {
+    const filters = '?minEmployees=10&maxEmployees=2'
+    const resp = await request(app).get(`/companies${filters}`)
+    expect(resp.status).toEqual(400)
+    expect(resp.body).toEqual({
+      "error": {
+        "message": "Min employees must be less than max employees.",
+        "status": 400
+      }
+    })
+  });
+
 });
 
 /************************************** GET /companies/:handle */

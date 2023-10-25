@@ -84,21 +84,18 @@ class Company {
     let query = [];
     const values = [];
 
-    //If NameLike exists as a parameter (not undefined)
     if (nameLike) {
       values.push(`%${nameLike}%`);
       query.push(`name ILIKE $${values.length}`);
       // query.push(`to_tsvector('english',name)) @@ to_tsquery('english', $${count}`);
     }
 
-    //Only min employees
-    if ((minEmployees >= 0)) {
+    if (minEmployees >= 0) {
       values.push(minEmployees);
       query.push(`$${values.length} <= num_employees`);
     }
 
-    //only max employees
-    if ((maxEmployees >= 0)) {
+    if (maxEmployees >= 0) {
       values.push(maxEmployees);
       query.push(`num_employees <= $${values.length}`);
     }
