@@ -130,18 +130,62 @@ describe("findAll", function () {
       }
     ]);
   });
+});
 
-  test("fail: minEmployees > maxEmployees", async function () {
+/************************************** _companyFilter */
+describe("_companyFilter", function () {
+  test("works: _companyFilter with nameLike", async function () {
     const filters = {
-      minEmployees: "3",
-      maxEmployees: "2"
+      nameLike: "2"
     }
 
-    expect( async () => await Company.findAll(filters)).rejects.toThrow(BadRequestError);
+    let companies = await Company._companyFilter(filters);
+
+    expect(companies).toEqual({
+      query: "WHERE name ILIKE $1",
+      values: ["%2%"]
+    });
   });
-  //TODO:Test for if min/max are ints
-  //TODO:write test for helper function in company
-});
+
+  test("works: _companyFilter with min and max", async function () {
+    const filters = {
+      minEmployees: 2,
+      maxEmployees: 3
+    }
+
+    let companies = await Company._companyFilter(filters);
+
+    expect(companies).toEqual({
+      query: "WHERE $1 <= num_employees AND num_employees <= $2",
+      values: [2,3]
+    });
+  });
+
+  test("works: _companyFilter all filters", async function () {
+    const filters = {
+      minEmployees: 2,
+      maxEmployees: 3,
+      nameLike: "2"
+    }
+
+    let companies = await Company._companyFilter(filters);
+
+    expect(companies).toEqual({
+      query: "WHERE name ILIKE $1 AND $2 <= num_employees AND num_employees <= $3",
+      values: ["%2%",2,3]
+    });
+  });
+
+  test("works: _companyFilter no params", async function () {
+
+    let companies = await Company._companyFilter();
+
+    expect(companies).toEqual({
+      query: "",
+      values: []
+    });
+  });
+})
 
 /************************************** get */
 

@@ -56,7 +56,7 @@ class Company {
    */
 
   static async findAll(searchParameters) {
-    const { query, values } = this._companyFilterFunction(searchParameters);
+    const { query, values } = this._companyFilter(searchParameters);
 
     const companiesRes = await db.query(`
         SELECT handle,
@@ -77,55 +77,36 @@ class Company {
    *  throws error if minEmployees > maxEmployees
   */
 
-  static _companyFilterFunction(parameterInputs={}) {
+  static _companyFilter(parameterInputs = {}) {
 
-    let { maxEmployees, minEmployees, nameLike } = parameterInputs ;
-
-    //TODO:handle this in route
-    maxEmployees = parseInt(maxEmployees);
-    minEmployees = parseInt(minEmployees);
-
-    //TODO:throw this error before calling _companyFilter..
-    //Min and max both exist
-    if (maxEmployees && minEmployees) {//TODO:no need for this line
-      if (maxEmployees < minEmployees) {
-        throw new BadRequestError("minEmployees cannot be greater than maxEmployees");
-      }
-    }
+    let { maxEmployees, minEmployees, nameLike } = parameterInputs;
 
     let query = [];
     const values = [];
-    //TODO:Can refactor to not use count, use length of arrays
-    let count = 1;
 
     //If NameLike exists as a parameter (not undefined)
     if (nameLike) {
-      query.push(`name ILIKE $${count}`);
-      // query.push(`to_tsvector('english',name)) @@ to_tsquery('english', $${count}`);
-      count++;
       values.push(`%${nameLike}%`);
+      query.push(`name ILIKE $${values.length}`);
+      // query.push(`to_tsvector('english',name)) @@ to_tsquery('english', $${count}`);
     }
 
     //Only min employees
-    if ((minEmployees)) {
-      query.push(`$${count} <= num_employees`);
-      count = count + 1;
+    if ((minEmployees >= 0)) {
       values.push(minEmployees);
+      query.push(`$${values.length} <= num_employees`);
     }
 
     //only max employees
-    if ((maxEmployees)) {
-      query.push(`num_employees <= $${count}`);
-      count = count + 1;
+    if ((maxEmployees >= 0)) {
       values.push(maxEmployees);
+      query.push(`num_employees <= $${values.length}`);
     }
 
-    //TODO:refactor to use ternary
-    if (query.length === 0) {
-      return { query: '', values: [] };
-    }
+    query = query.length ? 'WHERE ' + query.join(' AND ') : '';
 
-    return { query: 'WHERE ' + query.join(' AND '), values };
+    return { query, values };
+
   }
 
 

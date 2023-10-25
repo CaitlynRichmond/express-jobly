@@ -55,8 +55,16 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
 
 router.get("/", async function (req, res, next) {
   //TODO: validate that input for min/max is a num deep copy assign to new variable
+  const query = req.query;
+  query.minEmployees = parseInt(query.minEmployees) || null;
+  query.maxEmployees = parseInt(query.maxEmployees) || null;
+
+  if (query.minEmployees > query.maxEmployees) {
+    throw new BadRequestError("Min employees must be less than max employees.");
+  }
+
   const validator = jsonschema.validate(
-    req.query,
+    query,
     companyFilterSchema,
     { required: true }
   );
@@ -66,7 +74,7 @@ router.get("/", async function (req, res, next) {
     throw new BadRequestError(errs);
   }
 
-  const companies = await Company.findAll(req.query);
+  const companies = await Company.findAll(query);
   return res.json({ companies });
 });
 
