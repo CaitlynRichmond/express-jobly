@@ -50,8 +50,12 @@ class Company {
     return company;
   }
 
-  //TODO:Sexify this docstring copy from route
+
   /**Find all companies that match input parameters
+   *  Can filter on provided search filters:
+   * - minEmployees
+   * - maxEmployees
+   * - nameLike (will find case-insensitive, partial matches)
    *Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
    */
 
