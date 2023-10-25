@@ -67,6 +67,23 @@ class Company {
     return companiesRes.rows;
   }
 
+  /**Find companies that match input parameters
+   *Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
+   */
+  static async findSome(searchParameters){
+    const companiesRes = await db.query(`
+        SELECT handle,
+               name,
+               description,
+               num_employees AS "numEmployees",
+               logo_url      AS "logoUrl"
+        FROM companies
+        WHERE ${searchParameters.setCols}
+        ORDER BY name`, searchParameters.values );
+    return companiesRes.rows;
+  }
+
+
   /** Given a company handle, return data about company.
    *
    * Returns { handle, name, description, numEmployees, logoUrl, jobs }

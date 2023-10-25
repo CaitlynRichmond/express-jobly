@@ -8,6 +8,7 @@ const express = require("express");
 const { BadRequestError } = require("../expressError");
 const { ensureLoggedIn } = require("../middleware/auth");
 const Company = require("../models/company");
+const { sqlForPartialUpdate } = require("../helpers/sql")
 
 const companyNewSchema = require("../schemas/companyNew.json");
 const companyUpdateSchema = require("../schemas/companyUpdate.json");
@@ -51,6 +52,10 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
  */
 
 router.get("/", async function (req, res, next) {
+  const { minEmployees, maxEmployees, nameLike } = req.query
+  if (!minEmployees || !maxEmployees || !nameLike){
+    const searchParams = sqlForPartialUpdate()
+  }
   const companies = await Company.findAll();
   return res.json({ companies });
 });
