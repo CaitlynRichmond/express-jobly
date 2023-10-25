@@ -8,7 +8,9 @@ const express = require("express");
 const { BadRequestError } = require("../expressError");
 const { ensureLoggedIn } = require("../middleware/auth");
 const Company = require("../models/company");
-const { sqlForPartialUpdate } = require("../helpers/sql")
+
+
+const companyFilterSchema = require("../schemas/companyFilter.json");
 
 const companyNewSchema = require("../schemas/companyNew.json");
 const companyUpdateSchema = require("../schemas/companyUpdate.json");
@@ -29,7 +31,7 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
   const validator = jsonschema.validate(
     req.body,
     companyNewSchema,
-    {required: true}
+    { required: true }
   );
   if (!validator.valid) {
     const errs = validator.errors.map(e => e.stack);
@@ -52,12 +54,35 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
  */
 
 router.get("/", async function (req, res, next) {
-  const { minEmployees, maxEmployees, nameLike } = req.query
-  if (!minEmployees || !maxEmployees || !nameLike){
-    const searchParams = sqlForPartialUpdate()
+
+
+  const validator = jsonschema.validate(
+    req.query,
+    companyFilterSchema,
+    { required: true }
+  );
+  if (!validator.valid) {
+    const errs = validator.errors.map(e => e.stack);
+    throw new BadRequestError(errs);
   }
-  const companies = await Company.findAll();
+
+  // const { query, values } = sqlForFiltering(req.query);
+
+  const companies = await Company.find(req.query);
   return res.json({ companies });
+
+
+  // const companies = await Company.findSome(query, values);
+  // const companies = await Company.findAll();
+
+
+  // return res.json({ query, values });
+  return res.json({ companies });
+
+
+
+
+
 });
 
 /** GET /[handle]  =>  { company }
@@ -88,7 +113,7 @@ router.patch("/:handle", ensureLoggedIn, async function (req, res, next) {
   const validator = jsonschema.validate(
     req.body,
     companyUpdateSchema,
-    {required:true}
+    { required: true }
   );
   if (!validator.valid) {
     const errs = validator.errors.map(e => e.stack);

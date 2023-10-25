@@ -38,12 +38,12 @@ class Company {
                     description,
                     num_employees AS "numEmployees",
                     logo_url AS "logoUrl"`, [
-          handle,
-          name,
-          description,
-          numEmployees,
-          logoUrl,
-        ],
+      handle,
+      name,
+      description,
+      numEmployees,
+      logoUrl,
+    ],
     );
     const company = result.rows[0];
 
@@ -70,7 +70,11 @@ class Company {
   /**Find companies that match input parameters
    *Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
    */
-  static async findSome(searchParameters){
+  static async find(searchParameters) {
+
+    const { query, values } = this._companyFilterFunction(searchParameters);
+
+    // const { query, values } = { query: '', values: [] };
     const companiesRes = await db.query(`
         SELECT handle,
                name,
@@ -78,9 +82,68 @@ class Company {
                num_employees AS "numEmployees",
                logo_url      AS "logoUrl"
         FROM companies
-        WHERE ${searchParameters.setCols}
-        ORDER BY name`, searchParameters.values );
+        ${query}
+        ORDER BY name`, values);
     return companiesRes.rows;
+  }
+
+  /**
+   * Takes parameters object of allowed search parameters:
+   *  minEmployees, maxEmployees, nameLike
+   * Returns SQL query that filters by them and their values
+   *  throws error if minEmployees > maxEmployees
+  */
+
+  /**
+   * - Tests
+   * - Insomnia for company models? routes? if there's not already
+   * - Can we get rid of find All?
+   */
+  static _companyFilterFunction(parameterInputs) {
+
+    let { maxEmployees, minEmployees, nameLike } = parameterInputs;
+
+    maxEmployees = parseInt(maxEmployees);
+    minEmployees = parseInt(minEmployees);
+
+    //Min and max both exist
+    if (maxEmployees && minEmployees) {
+      if (maxEmployees < minEmployees) {
+        throw new BadRequestError("maxEmployees cannot be greater than minEmployees");
+      }
+    }
+
+    let query = [];
+    const values = [];
+    let count = 1;
+
+    //If NameLike exists as a parameter (not undefined)
+    if (nameLike) {
+      query.push(`name ILIKE $${count}`);
+      // query.push(`to_tsvector('english',name)) @@ to_tsquery('english', $${count}`);
+      count++;
+      values.push(`%${nameLike}%`);
+    }
+
+    //Only min employees
+    if ((minEmployees)) {
+      query.push(`$${count} <= num_employees`);
+      count = count + 1;
+      values.push(minEmployees);
+    }
+
+    //only max employees
+    if ((maxEmployees)) {
+      query.push(`num_employees <= $${count}`);
+      count = count + 1;
+      values.push(maxEmployees);
+    }
+
+    if (query.length === 0) {
+      return { query: '', values: [] };
+    }
+
+    return { query: 'WHERE ' + query.join(' AND '), values };
   }
 
 
@@ -123,11 +186,11 @@ class Company {
 
   static async update(handle, data) {
     const { setCols, values } = sqlForPartialUpdate(
-        data,
-        {
-          numEmployees: "num_employees",
-          logoUrl: "logo_url",
-        });
+      data,
+      {
+        numEmployees: "num_employees",
+        logoUrl: "logo_url",
+      });
     const handleVarIdx = "$" + (values.length + 1);
 
     const querySql = `
