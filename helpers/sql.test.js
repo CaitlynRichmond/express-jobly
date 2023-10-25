@@ -17,8 +17,8 @@ describe("sqlForPartialUpdate", function () {
   test("sqlForPartialUpdate with empty body", function () {
     const dataToUpdate = {};
     const jsToSql = {};
-  
-    expect(() => sqlForPartialUpdate(dataToUpdate, jsToSql)).toThrow(BadRequestError);
+
+    expect( () => sqlForPartialUpdate(dataToUpdate, jsToSql)).toThrow(BadRequestError);
   });
 
 });

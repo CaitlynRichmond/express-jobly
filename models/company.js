@@ -50,31 +50,14 @@ class Company {
     return company;
   }
 
-  /** Find all companies.
-   *
-   * Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
-   * */
-
-  static async findAll() {
-    const companiesRes = await db.query(`
-        SELECT handle,
-               name,
-               description,
-               num_employees AS "numEmployees",
-               logo_url      AS "logoUrl"
-        FROM companies
-        ORDER BY name`);
-    return companiesRes.rows;
-  }
-
-  /**Find companies that match input parameters
+  //TODO:Sexify this docstring copy from route
+  /**Find all companies that match input parameters
    *Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
    */
-  static async find(searchParameters) {
 
+  static async findAll(searchParameters) {
     const { query, values } = this._companyFilterFunction(searchParameters);
 
-    // const { query, values } = { query: '', values: [] };
     const companiesRes = await db.query(`
         SELECT handle,
                name,
@@ -94,27 +77,25 @@ class Company {
    *  throws error if minEmployees > maxEmployees
   */
 
-  /**
-   * - Tests
-   * - Insomnia for company models? routes? if there's not already
-   * - Can we get rid of find All?
-   */
-  static _companyFilterFunction(parameterInputs) {
+  static _companyFilterFunction(parameterInputs={}) {
 
-    let { maxEmployees, minEmployees, nameLike } = parameterInputs;
+    let { maxEmployees, minEmployees, nameLike } = parameterInputs ;
 
+    //TODO:handle this in route
     maxEmployees = parseInt(maxEmployees);
     minEmployees = parseInt(minEmployees);
 
+    //TODO:throw this error before calling _companyFilter..
     //Min and max both exist
-    if (maxEmployees && minEmployees) {
+    if (maxEmployees && minEmployees) {//TODO:no need for this line
       if (maxEmployees < minEmployees) {
-        throw new BadRequestError("maxEmployees cannot be greater than minEmployees");
+        throw new BadRequestError("minEmployees cannot be greater than maxEmployees");
       }
     }
 
     let query = [];
     const values = [];
+    //TODO:Can refactor to not use count, use length of arrays
     let count = 1;
 
     //If NameLike exists as a parameter (not undefined)
@@ -139,6 +120,7 @@ class Company {
       values.push(maxEmployees);
     }
 
+    //TODO:refactor to use ternary
     if (query.length === 0) {
       return { query: '', values: [] };
     }

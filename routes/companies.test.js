@@ -95,6 +95,38 @@ describe("GET /companies", function () {
           ],
     });
   });
+
+  test("Test with filters", async function () {
+    const filters = '?minEmployees=1&maxEmployees=2&nameLike=2'
+    const resp = await request(app).get(`/companies${filters}`);
+    expect(resp.body).toEqual({
+      companies:
+          [
+            {
+              handle: "c2",
+              name: "C2",
+              description: "Desc2",
+              numEmployees: 2,
+              logoUrl: "http://c2.img",
+            },
+          ],
+    });
+  });
+
+  test("Test fail with extra filter parameter", async function () {
+    const filters = '?minEmployees=1&maxEmployees=2&nameLike=2&TEST=TEST'
+    const resp = await request(app).get(`/companies${filters}`)
+    expect(resp.status).toEqual(400)
+    expect(resp.body).toEqual({
+      "error": {
+        "message": [
+          "instance is not allowed to have the additional property \"TEST\""
+        ],
+        "status": 400
+      }
+    })
+  });
+  //TODO:Test all other situations (min max etc)
 });
 
 /************************************** GET /companies/:handle */

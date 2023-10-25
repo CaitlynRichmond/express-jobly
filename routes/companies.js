@@ -54,35 +54,20 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
  */
 
 router.get("/", async function (req, res, next) {
-
-
+  //TODO: validate that input for min/max is a num deep copy assign to new variable
   const validator = jsonschema.validate(
     req.query,
     companyFilterSchema,
     { required: true }
   );
+
   if (!validator.valid) {
     const errs = validator.errors.map(e => e.stack);
     throw new BadRequestError(errs);
   }
 
-  // const { query, values } = sqlForFiltering(req.query);
-
-  const companies = await Company.find(req.query);
+  const companies = await Company.findAll(req.query);
   return res.json({ companies });
-
-
-  // const companies = await Company.findSome(query, values);
-  // const companies = await Company.findAll();
-
-
-  // return res.json({ query, values });
-  return res.json({ companies });
-
-
-
-
-
 });
 
 /** GET /[handle]  =>  { company }

@@ -85,6 +85,62 @@ describe("findAll", function () {
       },
     ]);
   });
+
+  test("works: all filters present", async function () {
+    const filters = {
+      minEmployees: "2",
+      maxEmployees: "3",
+      nameLike: "c"
+    }
+
+    let companies = await Company.findAll(filters);
+
+    expect(companies).toEqual([
+      {
+        handle: "c2",
+        name: "C2",
+        description: "Desc2",
+        numEmployees: 2,
+        logoUrl: "http://c2.img",
+      },
+      {
+        handle: "c3",
+        name: "C3",
+        description: "Desc3",
+        numEmployees: 3,
+        logoUrl: "http://c3.img",
+      },
+    ]);
+  });
+
+  test("works: nameLike", async function () {
+    const filters = {
+      nameLike: "2"
+    }
+
+    let companies = await Company.findAll(filters);
+
+    expect(companies).toEqual([
+      {
+        handle: "c2",
+        name: "C2",
+        description: "Desc2",
+        numEmployees: 2,
+        logoUrl: "http://c2.img",
+      }
+    ]);
+  });
+
+  test("fail: minEmployees > maxEmployees", async function () {
+    const filters = {
+      minEmployees: "3",
+      maxEmployees: "2"
+    }
+
+    expect( async () => await Company.findAll(filters)).rejects.toThrow(BadRequestError);
+  });
+  //TODO:Test for if min/max are ints
+  //TODO:write test for helper function in company
 });
 
 /************************************** get */
