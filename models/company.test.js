@@ -88,8 +88,8 @@ describe("findAll", function () {
 
   test("works: all filters present", async function () {
     const filters = {
-      minEmployees: "2",
-      maxEmployees: "3",
+      minEmployees: 2,
+      maxEmployees: 3,
       nameLike: "c"
     }
 
