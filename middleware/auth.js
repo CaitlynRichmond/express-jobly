@@ -45,9 +45,19 @@ function ensureAdmin(req, res, next) {
   throw new UnauthorizedError();
 }
 
+function ensureCorrectUserOrAdmin(req, res, next) {
+  const currentUser = res.locals.user || {};
+  const hasAuthorizedUsername = currentUser.username === req.params.username;
+
+  if (!currentUser.isAdmin && !hasAuthorizedUsername) {
+    throw new UnauthorizedError();
+  }
+  return next();
+}
 
 module.exports = {
   authenticateJWT,
   ensureLoggedIn,
-  ensureAdmin
+  ensureAdmin,
+  ensureCorrectUserOrAdmin
 };
