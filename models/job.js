@@ -3,17 +3,18 @@
 const db = require("../db");
 const { BadRequestError, NotFoundError } = require("../expressError");
 const { sqlForPartialUpdate } = require("../helpers/sql");
-//TODO: CHANGE DOCSTRINGS
-/** Related functions for companies. */
+
+
+/** Related functions for jobs. */
 
 class Job {
-  /** Create a company (from data), update db, return new company data.
+  /** Create a job (from data), update db, return new job data.
    *
-   * data should be { handle, name, description, numEmployees, logoUrl }
+   * data should be { title, salary, equity, companyHandle }
    *
-   * Returns { handle, name, description, numEmployees, logoUrl }
+   * Returns { id, title, salary, equity, companyHandle }
    *
-   * Throws BadRequestError if company already in database.
+   * Throws BadRequestError if companyHandle doesn't exist in companies
    * */
 
   static async create({ title, salary, equity, companyHandle }) {
@@ -51,10 +52,10 @@ class Job {
 
   /**Find all companies that match input parameters
    *  Can filter on provided search filters:
-   * - minEmployees
-   * - maxEmployees
-   * - nameLike (will find case-insensitive, partial matches)
-   *Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
+   * - title (case insensitive, partial matches)
+   * - minSalary
+   * - hasEquity (true: shows only routes with equity, false: shows all jobs)
+   *Returns [{ id, title, salary, equity, companyHandle }, ...]
    */
 
   static async findAll(searchParameters) {
@@ -74,31 +75,32 @@ class Job {
 
   /**
    * Takes parameters object of allowed search parameters:
-   *  minEmployees, maxEmployees, nameLike
+   *  title, minSalary, hasEquity
    * Returns SQL query that filters by them and their values
-   *  throws error if minEmployees > maxEmployees
   */
   static _jobFilter(parameterInputs = {}) {
 
-    let { maxEmployees, minEmployees, nameLike } = parameterInputs;
+    let { title, minSalary, hasEquity } = parameterInputs;
 
     let query = [];
     const values = [];
 
-    if (nameLike) {
-      values.push(`%${nameLike}%`);
-      query.push(`name ILIKE $${values.length}`);
-      // query.push(`to_tsvector('english',name)) @@ to_tsquery('english', $${count}`);
+    if (title) {
+      values.push(`%${title}%`);
+      query.push(`title ILIKE $${values.length}`);
+      // query.push(`to_tsvector('english',title)) @@ to_tsquery('english', $${count}`);
     }
 
-    if (minEmployees >= 0) {
-      values.push(minEmployees);
-      query.push(`$${values.length} <= num_employees`);
+    if (minSalary >= 0) {
+      values.push(minSalary);
+      query.push(`$${values.length} <= salary`);
     }
 
-    if (maxEmployees >= 0) {
-      values.push(maxEmployees);
-      query.push(`num_employees <= $${values.length}`);
+    if (hasEquity === true) {
+      //Design decision to push 0 and still use values.length despite it not
+      //being a user input to maintain the pattern and maintain scalability
+      values.push(0);
+      query.push(`equity > $${values.length}`);
     }
 
     query = query.length ? 'WHERE ' + query.join(' AND ') : '';
@@ -108,10 +110,9 @@ class Job {
   }
 
 
-  /** Given a company handle, return data about company.
+  /** Given a job id, return data about job.
    *
-   * Returns { handle, name, description, numEmployees, logoUrl, jobs }
-   *   where jobs is [{ id, title, salary, equity, companyHandle }, ...]
+   * Returns { id, title, salary, equity, companyHandle}
    *
    * Throws NotFoundError if not found.
    **/
@@ -133,14 +134,14 @@ class Job {
     return job;
   }
 
-  /** Update company data with `data`.
+  /** Update job data with `data`.
    *
    * This is a "partial update" --- it's fine if data doesn't contain all the
    * fields; this only changes provided ones.
    *
-   * Data can include: {name, description, numEmployees, logoUrl}
+   * Data can include: {title, salary, equity}
    *
-   * Returns {handle, name, description, numEmployees, logoUrl}
+   * Returns {id, title, salary, equity, companyHandle}
    *
    * Throws NotFoundError if not found.
    */
@@ -167,9 +168,9 @@ class Job {
     return job;
   }
 
-  /** Delete given company from database; returns undefined.
+  /** Delete given job from database; returns undefined.
    *
-   * Throws NotFoundError if company not found.
+   * Throws NotFoundError if job not found.
    **/
 
   static async remove(id) {

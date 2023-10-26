@@ -23,7 +23,7 @@ afterAll(commonAfterAll);
 /************************************** POST /users */
 
 describe("POST /users", function () {
-  test("unauth for users", async function () {
+  test("unauth for non-admin users", async function () {
     const resp = await request(app)
       .post("/users")
       .send({
