@@ -23,7 +23,7 @@ class Job {
         FROM companies
         WHERE handle = $1`, [companyHandle]);
 
-    if (checkCompanyHandle.rows[0])
+    if (!checkCompanyHandle.rows[0])
       throw new NotFoundError(`No company with handle: ${companyHandle}`);
 
     const result = await db.query(`
@@ -129,7 +129,7 @@ class Job {
 
     const job = jobRes.rows[0];
 
-    if (!job) throw new NotFoundError(`No job: ${handle}`);
+    if (!job) throw new NotFoundError(`No job: ${id}`);
 
     return job;
   }
@@ -148,12 +148,12 @@ class Job {
 
   static async update(id, data) {
     const { setCols, values } = sqlForPartialUpdate(data, {});
-    const handleVarIdx = "$" + (values.length + 1);
+    const idVarIdx = "$" + (values.length + 1);
 
     const querySql = `
         UPDATE jobs
         SET ${setCols}
-        WHERE handle = ${handleVarIdx}
+        WHERE id = ${idVarIdx}
         RETURNING
             id,
             title,

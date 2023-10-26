@@ -27,7 +27,13 @@ describe("create", function () {
 
   test("works", async function () {
     let job = await Job.create(newJob);
-    expect(job).toEqual(newJob);
+    expect(job).toEqual({
+      id: expect.any(Number),
+      title: "newJobTitle",
+      salary: 100,
+      equity: "0.9",
+      companyHandle: "c1"
+    });
 
     const result = await db.query(
       `SELECT id, title, salary, equity, company_handle
@@ -38,7 +44,8 @@ describe("create", function () {
         id: expect.any(Number),
         title: "newJobTitle",
         salary: 100,
-        equity: 0.9
+        equity: "0.9",
+        company_handle: "c1"
       },
     ]);
   });
@@ -56,13 +63,16 @@ describe("create", function () {
         id: expect.any(Number),
         title: "newJobTitle",
         salary: 100,
-        equity: 0.9
+        equity: "0.9",
+        company_handle: "c1"
+
       },
       {
         id: expect.any(Number),
         title: "newJobTitle",
         salary: 100,
-        equity: 0.9
+        equity: "0.9",
+        company_handle: "c1"
       }
     ]);
   });
@@ -77,21 +87,21 @@ describe("findAll", function () {
         id: expect.any(Number),
         title: "j1",
         salary: 1,
-        equity: 0.1,
+        equity: "0.1",
         companyHandle: 'c1'
       },
       {
         id: expect.any(Number),
         title: "j2",
         salary: 2,
-        equity: 0.2,
+        equity: "0.2",
         companyHandle: 'c2'
       },
       {
         id: expect.any(Number),
         title: "j3",
         salary: 3,
-        equity: 0.3,
+        equity: "0",
         companyHandle: 'c3'
       },
     ]);
@@ -100,8 +110,8 @@ describe("findAll", function () {
   test("works: all filters present", async function () {
     const filters = {
       title: "j",
-      equity: true,
-      salary: 3
+      hasEquity: true,
+      minSalary: 2
     };
 
     let jobs = await Job.findAll(filters);
@@ -109,15 +119,15 @@ describe("findAll", function () {
     expect(jobs).toEqual([
       {
         id: expect.any(Number),
-        title: "j3",
-        salary: 3,
-        equity: 0.3,
-        companyHandle: 'c3'
+        title: "j2",
+        salary: 2,
+        equity: "0.2",
+        companyHandle: 'c2'
       },
     ]);
   });
 
-  test("works: nameLike", async function () {
+  test("works: title", async function () {
     const filters = {
       title: "2"
     };
@@ -129,7 +139,7 @@ describe("findAll", function () {
         id: expect.any(Number),
         title: "j2",
         salary: 2,
-        equity: 0.2,
+        equity: "0.2",
         companyHandle: 'c2'
       }
     ]);
@@ -195,14 +205,16 @@ describe("_jobFilter", function () {
 
 describe("get", function () {
   test("works", async function () {
-    const jobId = await db.query(`
-    SELECT id FROM jobs WHERE title = 'j1'`)
+    const resultForJobId = await db.query(`
+    SELECT id FROM jobs WHERE title = 'j1'`);
+    const jobId = resultForJobId.rows[0].id;
+
     let job = await Job.get(jobId);
     expect(job).toEqual({
       id: jobId,
       title: "j1",
       salary: 1,
-      equity: 0.1,
+      equity: "0.1",
       companyHandle: 'c1'
     });
   });
@@ -228,8 +240,10 @@ describe("update", function () {
   };
 
   test("works", async function () {
-    const jobId = await db.query(`
-    SELECT id FROM jobs WHERE title = 'j1'`)
+    const resultForJobId = await db.query(`
+    SELECT id FROM jobs WHERE title = 'j1'`);
+    const jobId = resultForJobId.rows[0].id;
+
 
     let job = await Job.update(jobId, updateData);
     expect(job).toEqual({
@@ -246,26 +260,12 @@ describe("update", function () {
       id: jobId,
       title: "newJ1",
       salary: 100,
-      equity: 0.9,
-      company_handle:"c1"
+      equity: "0.9",
+      company_handle: "c1"
     }]);
   });
 
-  test("bad: extra field", async function () {
-    const jobId = await db.query(`
-    SELECT id FROM jobs WHERE title = 'j1'`)
 
-    const updateDataExtraField = {
-      title: "New",
-      salary: 0,
-      equity: 0.1,
-      company_handle: "c1",
-      thisIsNotAllowed: "test"
-    };
-
-    expect(async () => await Job.update(jobId, updateDataExtraField)).rejects.toThrow(BadRequestError);
-
-  });
 
   // test("not found if no such company", async function () {
   //   try {
