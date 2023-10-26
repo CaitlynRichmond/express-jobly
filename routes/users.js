@@ -101,10 +101,28 @@ router.patch("/:username", ensureCorrectUserOrAdmin, async function (req, res, n
  * Authorization required: admin or username = user
  **/
 
-router.delete("/:username", ensureCorrectUserOrAdmin, async function (req, res, next) {
-  await User.remove(req.params.username);
-  return res.json({ deleted: req.params.username });
-});
+router.delete(
+  "/:username",
+  ensureCorrectUserOrAdmin,
+  async function (req, res, next) {
 
+    await User.remove(req.params.username);
+    return res.json({ deleted: req.params.username });
+  });
+
+
+/** Post /[username]/jobs/[id] =>  { applied: jobId }
+*
+* Authorization required: admin or username = user
+**/
+router.post(
+  "/:username/jobs/:id",
+  ensureCorrectUserOrAdmin,
+  async function (req, res, next) {
+
+    const id = await User.apply(req.params.username, req.params.id);
+    return res.json({ applied: id });
+
+  });
 
 module.exports = router;

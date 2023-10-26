@@ -132,7 +132,7 @@ describe("findAll", function () {
 /************************************** get */
 
 describe("get", function () {
-  test("works", async function () {
+  test("works with user that has applied to no jobs", async function () {
     let user = await User.get("u1");
     expect(user).toEqual({
       username: "u1",
@@ -140,8 +140,23 @@ describe("get", function () {
       lastName: "U1L",
       email: "u1@email.com",
       isAdmin: false,
+      jobs: [],
     });
   });
+
+  test("works with user that has applied to jobs", async function () {
+    let user = await User.get("u2");
+    expect(user).toEqual({
+      username: "u2",
+      firstName: "U2F",
+      lastName: "U2L",
+      email: "u2@email.com",
+      isAdmin: false,
+      jobs: [expect.any(Number)],
+    });
+  });
+
+
 
   test("not found if no such user", async function () {
     try {
@@ -215,13 +230,54 @@ describe("remove", function () {
   test("works", async function () {
     await User.remove("u1");
     const res = await db.query(
-        "SELECT * FROM users WHERE username='u1'");
+      "SELECT * FROM users WHERE username='u1'");
     expect(res.rows.length).toEqual(0);
   });
 
   test("not found if no such user", async function () {
     try {
       await User.remove("nope");
+      throw new Error("fail test, you shouldn't get here");
+    } catch (err) {
+      expect(err instanceof NotFoundError).toBeTruthy();
+    }
+  });
+});
+
+
+/************************************** apply */
+
+describe("apply", function () {
+  test("works", async function () {
+    const resultForJobId = await db.query(`
+    SELECT id FROM jobs WHERE title = 'j1'`);
+    const jobId = resultForJobId.rows[0].id;
+
+    const apply = await User.apply("u1", jobId);
+
+    const res = await db.query(
+      "SELECT * FROM applications WHERE username='u1'");
+
+    expect(res.rows.length).toEqual(1);
+    expect(apply).toEqual(jobId);
+  });
+
+  test("user cannot apply to same job twice", async function () {
+    const resultForJobId = await db.query(`
+    SELECT id FROM jobs WHERE title = 'j1'`);
+    const jobId = resultForJobId.rows[0].id;
+
+    try {
+      await User.apply("u2", jobId);
+      throw new Error("fail test, you shouldn't get here");
+    } catch (err) {
+      expect(err instanceof BadRequestError).toBeTruthy();
+    }
+  });
+
+  test("not found if no such job", async function () {
+    try {
+      await User.apply("u1", 1234123);
       throw new Error("fail test, you shouldn't get here");
     } catch (err) {
       expect(err instanceof NotFoundError).toBeTruthy();

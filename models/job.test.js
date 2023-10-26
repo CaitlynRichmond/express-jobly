@@ -50,7 +50,7 @@ describe("create", function () {
     ]);
   });
 
-  test("can insert same job mulitple times", async function () {
+  test("can insert same job multiple times", async function () {
 
     await Job.create(newJob);
     await Job.create(newJob);
@@ -157,7 +157,7 @@ describe("findAll", function () {
   });
 });
 
-/************************************** _companyFilter */
+/************************************** _jobFilter */
 describe("_jobFilter", function () {
   test("works: with title", async function () {
     const filters = {

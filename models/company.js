@@ -90,8 +90,8 @@ class Company {
 
     if (nameLike) {
       values.push(`%${nameLike}%`);
-      query.push(`name ILIKE $${values.length}`);
-      // query.push(`to_tsvector('english',name)) @@ to_tsquery('english', $${count}`);
+      // query.push(`name ILIKE $${values.length}`);
+      query.push(`to_tsvector('english',name) @@ to_tsquery('english', $${values.length}`);
     }
 
     if (minEmployees >= 0) {

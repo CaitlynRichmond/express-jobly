@@ -201,7 +201,7 @@ describe("GET /jobs/:id", function () {
     expect(resp.statusCode).toEqual(404);
   });
 
-  test("400 for string job id", async function () {
+  test("500 for string job id", async function () {
     const resp = await request(app).get(`/jobs/test`);
     expect(resp.statusCode).toEqual(500);
 
@@ -257,7 +257,7 @@ describe("PATCH /jobs/:id", function () {
     expect(resp.statusCode).toEqual(401);
   });
 
-  test("not found on non-existant jobId", async function () {
+  test("not found on non-existent jobId", async function () {
     const resp = await request(app)
       .patch(`/jobs/12354123`)
       .send({
@@ -346,7 +346,7 @@ describe("DELETE /jobs/:id", function () {
     });
   });
 
-  test("not found for no such company", async function () {
+  test("not found for no such job", async function () {
     const resp = await request(app)
       .delete(`/jobs/0`)
       .set("authorization", `Bearer ${a1Token}`);

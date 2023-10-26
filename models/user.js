@@ -48,6 +48,40 @@ class User {
     throw new UnauthorizedError("Invalid username/password");
   }
 
+  /** Inserts username and jobId into applications table
+   * Returns not found if no job with jobId is found
+   * Else, returns confirmed id from query */
+  static async apply(username, jobId) {
+    const checkJobExists = await db.query(`
+        SELECT id
+        FROM jobs
+        WHERE id = $1`, [jobId]);
+
+    if (!checkJobExists.rows[0]) {
+      throw new NotFoundError(`No job with id: ${jobId}`);
+    }
+
+    const alreadyApplies = await db.query(`
+        SELECT username, job_id
+        FROM applications
+        WHERE username = $1 AND job_id = $2`, [username, jobId],);
+
+    if (alreadyApplies.rows[0]) {
+      throw new BadRequestError(`${username} already applied for ${jobId}`);
+    }
+
+
+    const result = await db.query(`
+        INSERT INTO applications
+        (username, job_id)
+        VALUES ($1, $2)
+        RETURNING job_id AS "id"`, [username, jobId],);
+
+    const id = result.rows[0].id;
+
+    return id;
+  }
+
   /** Register user with data.
    *
    * Returns { username, firstName, lastName, email, isAdmin }
@@ -56,7 +90,7 @@ class User {
    **/
 
   static async register(
-      { username, password, firstName, lastName, email, isAdmin }) {
+    { username, password, firstName, lastName, email, isAdmin }) {
     const duplicateCheck = await db.query(`
         SELECT username
         FROM users
@@ -84,13 +118,13 @@ class User {
                     last_name AS "lastName",
                     email,
                     is_admin AS "isAdmin"`, [
-          username,
-          hashedPassword,
-          firstName,
-          lastName,
-          email,
-          isAdmin,
-        ],
+      username,
+      hashedPassword,
+      firstName,
+      lastName,
+      email,
+      isAdmin,
+    ],
     );
 
     const user = result.rows[0];
@@ -114,13 +148,14 @@ class User {
         ORDER BY username`,
     );
 
+
     return result.rows;
   }
 
   /** Given a username, return data about user.
    *
    * Returns { username, first_name, last_name, email, is_admin, jobs }
-   *   where jobs is { id, title, company_handle, company_name, state }
+   *   where jobs is [ jobId1, jobId2, ...] }
    *
    * Throws NotFoundError if user not found.
    **/
@@ -139,6 +174,14 @@ class User {
     const user = userRes.rows[0];
 
     if (!user) throw new NotFoundError(`No user: ${username}`);
+
+    const appliedJobs = await db.query(`
+        SELECT job_id AS id
+        FROM applications
+        WHERE username = $1
+        ORDER BY job_id`, [username]);
+
+    user.jobs = appliedJobs.rows.map(j => j.id);
 
     return user;
   }
@@ -166,12 +209,12 @@ class User {
     }
 
     const { setCols, values } = sqlForPartialUpdate(
-        data,
-        {
-          firstName: "first_name",
-          lastName: "last_name",
-          isAdmin: "is_admin",
-        });
+      data,
+      {
+        firstName: "first_name",
+        lastName: "last_name",
+        isAdmin: "is_admin",
+      });
     const usernameVarIdx = "$" + (values.length + 1);
 
     const querySql = `

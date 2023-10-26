@@ -37,7 +37,13 @@ async function commonBeforeAll() {
              ('j2', 2, 0.2, 'c2'),
              ('j3', 3, 0, 'c3')`);
 
+  const resultForJobId = await db.query(`
+    SELECT id FROM jobs WHERE title = 'j1'`);
+  const jobId = resultForJobId.rows[0].id;
 
+  await db.query(`
+      INSERT INTO applications(job_id, username)
+      VALUES (${jobId}, 'u2')`);
 }
 
 async function commonBeforeEach() {
