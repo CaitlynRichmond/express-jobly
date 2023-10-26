@@ -40,11 +40,22 @@ function ensureLoggedIn(req, res, next) {
   throw new UnauthorizedError();
 }
 
+/** Middle ware to ensure the token belongs to an  admin user.
+ *
+ * If not, raises Unauthorized
+ */
+
 function ensureAdmin(req, res, next) {
   if (res.locals.user?.isAdmin) return next();
   throw new UnauthorizedError();
 }
 
+
+/** Middle ware to ensure the token matches the route username or
+ * belongs to admin user
+ *
+ * If not, raises Unauthorized
+ */
 function ensureCorrectUserOrAdmin(req, res, next) {
   const currentUser = res.locals.user || {};
   const hasAuthorizedUsername = currentUser.username === req.params.username;
