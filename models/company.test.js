@@ -31,7 +31,7 @@ describe("create", function () {
     expect(company).toEqual(newCompany);
 
     const result = await db.query(
-          `SELECT handle, name, description, num_employees, logo_url
+      `SELECT handle, name, description, num_employees, logo_url
            FROM companies
            WHERE handle = 'new'`);
     expect(result.rows).toEqual([
@@ -83,6 +83,13 @@ describe("findAll", function () {
         numEmployees: 3,
         logoUrl: "http://c3.img",
       },
+      {
+        handle: "c4",
+        name: "C4",
+        description: "Desc4",
+        numEmployees: 4,
+        logoUrl: "http://c4.img",
+      }
     ]);
   });
 
@@ -91,7 +98,7 @@ describe("findAll", function () {
       minEmployees: 2,
       maxEmployees: 3,
       nameLike: "c"
-    }
+    };
 
     let companies = await Company.findAll(filters);
 
@@ -116,7 +123,7 @@ describe("findAll", function () {
   test("works: nameLike", async function () {
     const filters = {
       nameLike: "2"
-    }
+    };
 
     let companies = await Company.findAll(filters);
 
@@ -137,7 +144,7 @@ describe("_companyFilter", function () {
   test("works: _companyFilter with nameLike", async function () {
     const filters = {
       nameLike: "2"
-    }
+    };
 
     let companies = await Company._companyFilter(filters);
 
@@ -151,13 +158,13 @@ describe("_companyFilter", function () {
     const filters = {
       minEmployees: 2,
       maxEmployees: 3
-    }
+    };
 
     let companies = await Company._companyFilter(filters);
 
     expect(companies).toEqual({
       query: "WHERE $1 <= num_employees AND num_employees <= $2",
-      values: [2,3]
+      values: [2, 3]
     });
   });
 
@@ -166,13 +173,13 @@ describe("_companyFilter", function () {
       minEmployees: 2,
       maxEmployees: 3,
       nameLike: "2"
-    }
+    };
 
     let companies = await Company._companyFilter(filters);
 
     expect(companies).toEqual({
       query: "WHERE name ILIKE $1 AND $2 <= num_employees AND num_employees <= $3",
-      values: ["%2%",2,3]
+      values: ["%2%", 2, 3]
     });
   });
 
@@ -185,7 +192,7 @@ describe("_companyFilter", function () {
       values: []
     });
   });
-})
+});
 
 /************************************** get */
 
@@ -198,6 +205,27 @@ describe("get", function () {
       description: "Desc1",
       numEmployees: 1,
       logoUrl: "http://c1.img",
+      jobs: [
+        {
+          id: expect.any(Number),
+          title: "j1",
+          salary: 1,
+          equity: "0.1",
+          companyHandle: "c1"
+        }
+      ]
+    });
+  });
+
+  test("works", async function () {
+    let company = await Company.get("c4");
+    expect(company).toEqual({
+      handle: "c4",
+      name: "C4",
+      description: "Desc4",
+      numEmployees: 4,
+      logoUrl: "http://c4.img",
+      jobs: []
     });
   });
 
@@ -229,7 +257,7 @@ describe("update", function () {
     });
 
     const result = await db.query(
-          `SELECT handle, name, description, num_employees, logo_url
+      `SELECT handle, name, description, num_employees, logo_url
            FROM companies
            WHERE handle = 'c1'`);
     expect(result.rows).toEqual([{
@@ -256,7 +284,7 @@ describe("update", function () {
     });
 
     const result = await db.query(
-          `SELECT handle, name, description, num_employees, logo_url
+      `SELECT handle, name, description, num_employees, logo_url
            FROM companies
            WHERE handle = 'c1'`);
     expect(result.rows).toEqual([{
@@ -293,7 +321,7 @@ describe("remove", function () {
   test("works", async function () {
     await Company.remove("c1");
     const res = await db.query(
-        "SELECT handle FROM companies WHERE handle='c1'");
+      "SELECT handle FROM companies WHERE handle='c1'");
     expect(res.rows.length).toEqual(0);
   });
 

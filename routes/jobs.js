@@ -17,7 +17,6 @@ const jobUpdateSchema = require("../schemas/jobUpdate.json");
 
 const router = new express.Router();
 
-//TODO:change doc strings
 /** POST / { job } =>  { job }
  *
  * job should be { title, salary, equity, companyHandle}
@@ -58,7 +57,9 @@ router.get("/", async function (req, res, next) {
 
   if (query.minSalary) query.minSalary = parseInt(query.minSalary);
 
-  if (query.equity) query.equity = parseFloat(query.equity);
+  if (query.hasEquity === 'true' || query.hasEquity === 'false') {
+    query.hasEquity = (query.hasEquity === 'true');
+  }
 
   const validator = jsonschema.validate(
     query,
@@ -71,8 +72,8 @@ router.get("/", async function (req, res, next) {
     throw new BadRequestError(errs);
   }
 
-  const job = await Job.findAll(query);
-  return res.json({ job });
+  const jobs = await Job.findAll(query);
+  return res.json({ jobs });
 });
 
 /** GET /[id]  =>  { job }
