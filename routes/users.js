@@ -3,7 +3,7 @@
 /** Routes for users. */
 
 const jsonschema = require("jsonschema");
-
+const generatePassword = require('generate-password');
 const express = require("express");
 const { ensureLoggedIn, ensureAdmin, ensureCorrectUserOrAdmin } = require("../middleware/auth");
 const { BadRequestError } = require("../expressError");
@@ -37,6 +37,14 @@ router.post("/", ensureAdmin, async function (req, res, next) {
     const errs = validator.errors.map(e => e.stack);
     throw new BadRequestError(errs);
   }
+
+  const randomPassword = generatePassword.generate({
+    length:10,
+    numbers:true
+  })
+
+  req.body.password = randomPassword
+  console.log("PASSWORD", req.body.password)
 
   const user = await User.register(req.body);
   const token = createToken(user);
