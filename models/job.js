@@ -86,7 +86,8 @@ class Job {
     const values = [];
 
     if (title) {
-      values.push(title);
+      values.push(`${title.split(' ').join('&')}:*`);
+
       query.push(`to_tsvector('english', title) @@ to_tsquery('english', $${values.length})`);
     }
 
