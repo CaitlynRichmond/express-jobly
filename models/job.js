@@ -86,9 +86,8 @@ class Job {
     const values = [];
 
     if (title) {
-      values.push(`%${title}%`);
-      query.push(`title ILIKE $${values.length}`);
-      // query.push(`to_tsvector('english',title)) @@ to_tsquery('english', $${count}`);
+      values.push(title);
+      query.push(`to_tsvector('english', title) @@ to_tsquery('english', $${values.length})`);
     }
 
     if (minSalary >= 0) {

@@ -50,6 +50,7 @@ class User {
 
   /** Inserts username and jobId into applications table
    * Returns not found if no job with jobId is found
+   * if user already applied, throws bad request error
    * Else, returns confirmed id from query */
   static async apply(username, jobId) {
     const checkJobExists = await db.query(`

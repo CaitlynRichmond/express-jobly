@@ -89,9 +89,8 @@ class Company {
     const values = [];
 
     if (nameLike) {
-      values.push(`%${nameLike}%`);
-      // query.push(`name ILIKE $${values.length}`);
-      query.push(`to_tsvector('english',name) @@ to_tsquery('english', $${values.length}`);
+      values.push(nameLike);
+      query.push(`to_tsvector('english',name) @@ to_tsquery('english', $${values.length})`);
     }
 
     if (minEmployees >= 0) {
