@@ -4,7 +4,6 @@ const db = require("../db");
 const { BadRequestError, NotFoundError } = require("../expressError");
 const { sqlForPartialUpdate } = require("../helpers/sql");
 
-
 /** Related functions for jobs. */
 
 class Job {
@@ -18,15 +17,19 @@ class Job {
    * */
 
   static async create({ title, salary, equity, companyHandle }) {
-    const checkCompanyHandle = await db.query(`
+    const checkCompanyHandle = await db.query(
+      `
         SELECT handle
         FROM companies
-        WHERE handle = $1`, [companyHandle]);
+        WHERE handle = $1`,
+      [companyHandle]
+    );
 
     if (!checkCompanyHandle.rows[0])
       throw new NotFoundError(`No company with handle: ${companyHandle}`);
 
-    const result = await db.query(`
+    const result = await db.query(
+      `
                 INSERT INTO jobs (title,
                                        salary,
                                        equity,
@@ -37,18 +40,13 @@ class Job {
                     title,
                     salary,
                     equity,
-                    company_handle AS "companyHandle"`, [
-      title,
-      salary,
-      equity,
-      companyHandle
-    ],
+                    company_handle AS "companyHandle"`,
+      [title, salary, equity, companyHandle]
     );
     const job = result.rows[0];
 
     return job;
   }
-
 
   /**Find all companies that match input parameters
    *  Can filter on provided search filters:
@@ -61,15 +59,19 @@ class Job {
   static async findAll(searchParameters) {
     const { query, values } = this._jobFilter(searchParameters);
 
-    const jobsRes = await db.query(`
+    const jobsRes = await db.query(
+      `
         SELECT id,
                title,
                salary,
                equity ,
                company_handle AS "companyHandle"
+               company_name AS "companyName"
         FROM jobs
         ${query}
-        ORDER BY company_handle, title `, values);
+        ORDER BY company_handle, title `,
+      values
+    );
     return jobsRes.rows;
   }
 
@@ -77,18 +79,19 @@ class Job {
    * Takes parameters object of allowed search parameters:
    *  title, minSalary, hasEquity
    * Returns SQL query that filters by them and their values
-  */
+   */
   static _jobFilter(parameterInputs = {}) {
-
     let { title, minSalary, hasEquity } = parameterInputs;
 
     let query = [];
     const values = [];
 
     if (title) {
-      values.push(`${title.split(' ').join('&')}:*`);
+      values.push(`${title.split(" ").join("&")}:*`);
 
-      query.push(`to_tsvector('english', title) @@ to_tsquery('english', $${values.length})`);
+      query.push(
+        `to_tsvector('english', title) @@ to_tsquery('english', $${values.length})`
+      );
     }
 
     if (minSalary >= 0) {
@@ -103,12 +106,10 @@ class Job {
       query.push(`equity > $${values.length}`);
     }
 
-    query = query.length ? 'WHERE ' + query.join(' AND ') : '';
+    query = query.length ? "WHERE " + query.join(" AND ") : "";
 
     return { query, values };
-
   }
-
 
   /** Given a job id, return data about job.
    *
@@ -118,14 +119,17 @@ class Job {
    **/
 
   static async get(id) {
-    const jobRes = await db.query(`
+    const jobRes = await db.query(
+      `
         SELECT id,
                title,
                salary,
                equity,
                company_handle AS "companyHandle"
         FROM jobs
-        WHERE id = $1`, [id]);
+        WHERE id = $1`,
+      [id]
+    );
 
     const job = jobRes.rows[0];
 
@@ -174,16 +178,18 @@ class Job {
    **/
 
   static async remove(id) {
-    const result = await db.query(`
+    const result = await db.query(
+      `
         DELETE
         FROM jobs
         WHERE id = $1
-        RETURNING id`, [id]);
+        RETURNING id`,
+      [id]
+    );
     const job = result.rows[0];
 
     if (!job) throw new NotFoundError(`No job: ${id}`);
   }
 }
-
 
 module.exports = Job;
