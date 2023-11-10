@@ -61,13 +61,14 @@ class Job {
 
     const jobsRes = await db.query(
       `
-        SELECT id,
-               title,
-               salary,
-               equity ,
-               company_handle AS "companyHandle"
-               company_name AS "companyName"
-        FROM jobs
+        SELECT j.id,
+               j.title,
+               j.salary,
+               j.equity,
+               j.company_handle AS "companyHandle"
+               c.name AS "companyName"
+        FROM jobs j
+          LEFT JOIN companies AS c ON c.handle = j.company_handle
         ${query}
         ORDER BY company_handle, title `,
       values
