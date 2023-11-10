@@ -23,7 +23,8 @@ class User {
 
   static async authenticate(username, password) {
     // try to find the user first
-    const result = await db.query(`
+    const result = await db.query(
+      `
         SELECT username,
                password,
                first_name AS "firstName",
@@ -31,7 +32,8 @@ class User {
                email,
                is_admin   AS "isAdmin"
         FROM users
-        WHERE username = $1`, [username],
+        WHERE username = $1`,
+      [username]
     );
 
     const user = result.rows[0];
@@ -53,30 +55,38 @@ class User {
    * if user already applied, throws bad request error
    * Else, returns confirmed id from query */
   static async apply(username, jobId) {
-    const checkJobExists = await db.query(`
+    const checkJobExists = await db.query(
+      `
         SELECT id
         FROM jobs
-        WHERE id = $1`, [jobId]);
+        WHERE id = $1`,
+      [jobId]
+    );
 
     if (!checkJobExists.rows[0]) {
       throw new NotFoundError(`No job with id: ${jobId}`);
     }
 
-    const alreadyApplies = await db.query(`
+    const alreadyApplies = await db.query(
+      `
         SELECT username, job_id
         FROM applications
-        WHERE username = $1 AND job_id = $2`, [username, jobId],);
+        WHERE username = $1 AND job_id = $2`,
+      [username, jobId]
+    );
 
     if (alreadyApplies.rows[0]) {
       throw new BadRequestError(`${username} already applied for ${jobId}`);
     }
 
-
-    const result = await db.query(`
+    const result = await db.query(
+      `
         INSERT INTO applications
         (username, job_id)
         VALUES ($1, $2)
-        RETURNING job_id AS "id"`, [username, jobId],);
+        RETURNING job_id AS "id"`,
+      [username, jobId]
+    );
 
     const id = result.rows[0].id;
 
@@ -90,12 +100,20 @@ class User {
    * Throws BadRequestError on duplicates.
    **/
 
-  static async register(
-    { username, password, firstName, lastName, email, isAdmin }) {
-    const duplicateCheck = await db.query(`
+  static async register({
+    username,
+    password,
+    firstName,
+    lastName,
+    email,
+    isAdmin,
+  }) {
+    const duplicateCheck = await db.query(
+      `
         SELECT username
         FROM users
-        WHERE username = $1`, [username],
+        WHERE username = $1`,
+      [username]
     );
 
     if (duplicateCheck.rows.length > 0) {
@@ -104,7 +122,8 @@ class User {
 
     const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
 
-    const result = await db.query(`
+    const result = await db.query(
+      `
                 INSERT INTO users
                 (username,
                  password,
@@ -118,14 +137,8 @@ class User {
                     first_name AS "firstName",
                     last_name AS "lastName",
                     email,
-                    is_admin AS "isAdmin"`, [
-      username,
-      hashedPassword,
-      firstName,
-      lastName,
-      email,
-      isAdmin,
-    ],
+                    is_admin AS "isAdmin"`,
+      [username, hashedPassword, firstName, lastName, email, isAdmin]
     );
 
     const user = result.rows[0];
@@ -146,9 +159,7 @@ class User {
                email,
                is_admin   AS "isAdmin"
         FROM users
-        ORDER BY username`,
-    );
-
+        ORDER BY username`);
 
     return result.rows;
   }
@@ -162,27 +173,32 @@ class User {
    **/
 
   static async get(username) {
-    const userRes = await db.query(`
+    const userRes = await db.query(
+      `
         SELECT username,
                first_name AS "firstName",
                last_name  AS "lastName",
                email,
                is_admin   AS "isAdmin"
         FROM users
-        WHERE username = $1`, [username],
+        WHERE username = $1`,
+      [username]
     );
 
     const user = userRes.rows[0];
 
     if (!user) throw new NotFoundError(`No user: ${username}`);
 
-    const appliedJobs = await db.query(`
+    const appliedJobs = await db.query(
+      `
         SELECT job_id AS id
         FROM applications
         WHERE username = $1
-        ORDER BY job_id`, [username]);
+        ORDER BY job_id`,
+      [username]
+    );
 
-    user.jobs = appliedJobs.rows.map(j => j.id);
+    user.applications = appliedJobs.rows.map((j) => j.id);
 
     return user;
   }
@@ -209,13 +225,11 @@ class User {
       data.password = await bcrypt.hash(data.password, BCRYPT_WORK_FACTOR);
     }
 
-    const { setCols, values } = sqlForPartialUpdate(
-      data,
-      {
-        firstName: "first_name",
-        lastName: "last_name",
-        isAdmin: "is_admin",
-      });
+    const { setCols, values } = sqlForPartialUpdate(data, {
+      firstName: "first_name",
+      lastName: "last_name",
+      isAdmin: "is_admin",
+    });
     const usernameVarIdx = "$" + (values.length + 1);
 
     const querySql = `
@@ -239,17 +253,18 @@ class User {
   /** Delete given user from database; returns undefined. */
 
   static async remove(username) {
-    let result = await db.query(`
+    let result = await db.query(
+      `
         DELETE
         FROM users
         WHERE username = $1
-        RETURNING username`, [username],
+        RETURNING username`,
+      [username]
     );
     const user = result.rows[0];
 
     if (!user) throw new NotFoundError(`No user: ${username}`);
   }
 }
-
 
 module.exports = User;
